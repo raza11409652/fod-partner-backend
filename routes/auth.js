@@ -9,6 +9,67 @@ router.get('/' , (req , res)=>{
     res.send('Server is running UP II');
 }) ; 
 
+router.post('/newpassword' ,async (req , res)=>{
+    const body = req.body ; 
+    const mobile = body.mobile ; 
+    const password = body.password ; 
+    if(mobile==null || mobile.length<10){
+      return  res.json({
+            error:true , 
+            msg : "Mobile number is required"
+        }) .status(200);
+    }
+    if(password == null){
+        return res.json({
+            error:true , 
+            msg:"Password is required"
+        }).status(200); 
+    }
+
+    partner.findOne({
+        where:{
+            partner_mobile:mobile
+        }
+    }).then(response=>{
+        // console.log(response);
+        if(!response){
+            return res.json({
+                error:true  , 
+                msg:"Invalid Request reason mobile number is not found" , 
+            }) ; 
+        }
+        partnerId = response.partner_id ; 
+        // console.log(partnerId);
+        bcrypt.hash(password , 12 ,async(err , hash)=>{
+            // console.log(hash);
+            await partnerLogin.update(
+                {partner_login_val:hash},
+                {where:{
+                    partner_login_ref:partnerId
+                }}).then(result=>{
+                    console.log(result);
+                    return res.json({
+                        error:false , 
+                        msg:'Password updated successfully' 
+                    }) ;
+                }) .catch(e=>{
+                    console.log(e);
+                    return res.json({
+                        error:true , 
+                        msg:'Password updation failed'
+                    }) ; 
+                    
+                })
+          
+        }) ; //hash password 
+        
+        
+        
+    }) ; 
+
+
+    
+}) ; 
 router.post('/login' , async (req , res)=>{
     const date = new Date(); 
     const body = req.body ; 
@@ -22,8 +83,8 @@ router.post('/login' , async (req , res)=>{
         }
     }).then(user=>{
         if(!user){
-            console.log("User is not found");
-            return res.json({error:false , msg:'User is not found'}).status(200);
+            // console.log("User is not found");
+            return res.json({error:true , msg:'User is not found'}).status(200);
         }
         const partnerId = user.partner_id ; 
         // console.log(partnerId);
@@ -34,17 +95,13 @@ router.post('/login' , async (req , res)=>{
         }).then(partner=>{
             // console.warn(partner);
             if(bcrypt.compareSync(password , partner.partner_login_val)){
-                let loginToken = jwt.sign(user.partner_email,process.env.TOKEN_SECRET , {
-                    expiresIn:144440
-                } )  ; 
+                let loginToken = jwt.sign(user.partner_email,process.env.TOKEN_SECRET) ; 
                 return  res.json({msg:"Login success" , error : false , token :loginToken, user:user.partner_name}).status(200) ;
             }else{
                 return  res.json({msg:"Login failed" , error : true , token :null }).status(200) ;
             }
               
-        })
-        
-        // return res.json({error:true , 'partner':partnerId}).status(200);
+        });
 
     }).catch(e=>{
         return res.json({error:true , msg:e}).status(404);
@@ -132,9 +189,6 @@ router.post('/verify'  , async(req , res)=>{
         console.log(error);
         
     }) ; 
-
-
-
 }) ; 
 
 module.exports= router;

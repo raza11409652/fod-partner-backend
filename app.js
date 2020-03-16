@@ -4,7 +4,7 @@ const bodyParser  = require('body-parser')
 const cors   =require('cors') ;
 //Routes Import
 const authRouter  = require('./routes/auth') ;
-//Start Express server
+const propertyRouter = require('./routes/propertyroutes') ; 
 const app = express() ;
 dotenv.config();
 const PORT  = process.env.PORT || 2000 ; 
@@ -15,6 +15,7 @@ app.use(cors());
 app.use(bodyParser.json());
 // app.use('/api/users' ,authRouter) ;
 app.use('/api' , authRouter);
+app.use('/property' , propertyRouter);
 app.listen(PORT , ()=>{
     console.warn("Server" , `server is runnig on ${PORT}`);
     
