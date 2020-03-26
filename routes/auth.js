@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const sendotp = require('../msg91/sendotp')
 const verifyotp = require('../msg91/verifyotp') 
+const validate = require('../middleware/validate') ; 
 router.get('/' , (req , res)=>{
     res.send('Server is running UP II');
 }) ; 
@@ -164,7 +165,7 @@ router.post('/reset' , async(req,res)=>{
     
 }) ; 
 
-router.post('/verify'  , async(req , res)=>{
+router.post('/verify'  ,async(req , res)=>{
     //this end point will require Mobile numbe and OTP
     const body = req.body ; 
     const mobile = body.mobile  ;
@@ -189,6 +190,111 @@ router.post('/verify'  , async(req , res)=>{
         console.log(error);
         
     }) ; 
+}) ; 
+router.post('/update' , validate  ,  async (req,res)=>{
+    const body = req.body ; 
+    /**
+     * Parameter @required 
+     * current password and new password
+     */
+    const currentPassword = body.password ; 
+    const newPassword = body.newpassword ; 
+    if(!currentPassword || !newPassword){
+        return res.json({
+            error : true , 
+            msg:"Invalid parameters"
+        }) .status(404);
+    }
+    if(currentPassword === newPassword){
+        return res.json({
+            error : true , 
+            msg:"Password should be different"
+        }) .status(200);
+    }
+
+
+
+    const user =req.user ; 
+
+    partner.findOne({
+        where:{
+            partner_email:user ,
+        }
+    }) .then(response=>{
+       if(!response){
+        return res.json({
+            error : true , 
+            msg:"User not found"
+        }) .status(404); 
+       }
+       const partnerId =response.partner_id ; 
+        //    console.log(partnerId);
+        partnerLogin.findOne({
+            where:{
+                partner_login_ref:partnerId 
+            }
+        }).then(login=>{
+            // console.log(login);
+            const loginpassword = login.partner_login_val ; 
+            const flag = bcrypt.compareSync(currentPassword , loginpassword) ; 
+            console.log(flag);
+            if(!flag){
+                return res.json({
+                    error:true , 
+                    msg : "Wrong current password"
+                }) .status(200); 
+            }
+            bcrypt.hash(newPassword , 12 ,async(err , hash)=>{
+                if(err){
+                    return res.json({
+                        error:true , 
+                        msg:err
+                    }) ; 
+                }
+                // console.log(hash);
+                await partnerLogin.update(
+                    {partner_login_val:hash} ,
+                    {
+                        where:{
+                            partner_login_ref : partnerId
+                        }
+                    }).then(result=>{
+                        console.log(result);
+                        if(result){
+                            return res.json({
+                                error:false , 
+                                msg:'Password updated'
+                            }).status(200) ; 
+                        }
+                        return res.json({
+                            error:true , 
+                            msg:'Auth failed'
+                        }) .status(200) ; 
+                        
+                    }) .catch(err=>{
+                        return res.json({
+                            error:true , 
+                            msg:err
+                        })
+                    }) ; 
+                
+            }) ;
+            
+            
+        }).catch(err=>{
+            console.warn(err);
+            
+        }); 
+       
+    }) ; 
+    // console.log(body);
+    // return res.json({
+    //     error:false , 
+    //     msg:user
+    // });
+
+
+    
 }) ; 
 
 module.exports= router;
