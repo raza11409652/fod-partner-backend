@@ -32,4 +32,32 @@ bookingRouter.get('/list/:id' ,validate  , async (req , res)=>{
    
     
 }) ; 
+bookingRouter.get('/:number',validate , async(req,res)=>{
+    let bookingnumber =  req.params.number ; 
+    bookingModel.findOne({
+        where:{
+            booking_number:bookingnumber
+        }
+    }).then(result=>{
+        // console.log(result);
+        // return res.json({
+        //     error:false , 
+        //     response:result
+        // }) ; 
+        if(!result){
+            return res.json({
+                error:true , 
+                msg : 'Error , nothing found' , 
+                errorcode  :400 
+            }).status(200);
+        }
+
+        return res.json({
+            msg:'Data found for '+ bookingnumber,
+            error  :false, 
+            records :result 
+        }).status(200) ; 
+        
+    })
+}) ; 
 module.exports = bookingRouter ; 
