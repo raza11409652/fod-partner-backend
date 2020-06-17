@@ -59,7 +59,7 @@ propertyRouter.get('/list' ,validate, async (req,res)=>{
 }) ;  
 propertyRouter.get('/list/:id' , validate , async(req,res)=>{
     const propertyid = req.params.id ; 
-    console.log(propertyid);
+    // console.log(propertyid);
     
     //validate ID
     propertyModel.findOne({
