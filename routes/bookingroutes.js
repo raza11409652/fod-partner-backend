@@ -1,6 +1,7 @@
 const bookingRouter = require('express').Router();
 const validate = require('../middleware/validate') ;
 const bookingModel = require('../model/booking_model') ; 
+const bookingPayment  = require('../model/booking_payment') ; 
 /**
  * @param  id is property Id only booking associated with this will 
  * be shown
@@ -59,5 +60,29 @@ bookingRouter.get('/:number',validate , async(req,res)=>{
         }).status(200) ; 
         
     })
+}) ; 
+/**
+ * Lis of payments associated with Booking Id and booking id is active 
+ */
+bookingRouter.get('/payment/:id' , validate , async(req , res)=>{
+    let bookingId = req.params.id ; 
+    bookingPayment.findAll({
+        where:{
+            booking_pay_ref:bookingId 
+        }
+    }).then(result=>{
+        if(!result){
+            return res.json({
+                error : true , 
+                msg : 'No records found'
+            }) ; 
+        }
+        return res.json({
+            error:false , 
+            records : result 
+        }).status(200) ; 
+    }) ; 
+
+
 }) ; 
 module.exports = bookingRouter ; 
